@@ -1,0 +1,36 @@
+---
+name: Tests and Code Analysis
+on:  # yamllint disable-line rule:truthy
+  # Trigger the workflow on pushes to the master branch and all pull requests.
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  check-lockfile:
+    runs-on: ubuntu-18.04
+    name: Check the JS Lockfile
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Check Lockfile
+        with:
+          package-manager: yarn
+  node-tests:
+    runs-on: ubuntu-18.04
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Read .nvmrc
+        run: echo ::set-output name=NVMRC::$(cat .nvmrc)
+        id: nvmrc
+
+      - name: Run visual regression snapshots
+        # Adding these PERCY_* environment variables to the env object below
+        # does not have the desired effect. For some reason, this only works
+        # when exported in the shell command.
+        run: export PERCY_BRANCH="$GITHUB_HEAD_REF" && export PERCY_TARGET_BRANCH="$GITHUB_BASE_REF" && yarn run snapshots
+        env:
+          PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
