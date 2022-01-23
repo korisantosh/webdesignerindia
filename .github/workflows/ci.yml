@@ -1,23 +1,24 @@
-name: Visual
-on: [push]
+name: Tests and Code Analysis
+on:  # yamllint disable-line rule:truthy
+  # Trigger the workflow on pushes to the master branch and all pull requests.
+  push:
+    branches:
+      - master
+  pull_request:
+
 jobs:
-  e2e:
-    runs-on: ubuntu-latest
+  node-tests:
+    runs-on: ubuntu-18.04
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v1
-      - uses: actions/setup-node@v1
-        with:
-          node-version: '10.x'
-      - name: Cypress run
-        uses: cypress-io/github-action@v1
-        with:
-          build: yarn setup
-          start: yarn start
-          # quote the url to be safe against YML parsing surprises
-          wait-on: 'http://localhost:3000'
-          # the entire command will automatically be prefixed with "npx"
-          command-prefix: 'percy exec -- npx'
+      - name: Percy for Static Sites
+        # You may pin to the exact commit or the version.
+        # uses: percy/snapshot-action@e40fa48b95df66c75835a93683115aaa55573d38
+        uses: percy/snapshot-action@v0.1.2
+        # Adding these PERCY_* environment variables to the env object below
+        # does not have the desired effect. For some reason, this only works
+        # when exported in the shell command.
+        run: export PERCY_BRANCH="$GITHUB_HEAD_REF" && export PERCY_TARGET_BRANCH="$GITHUB_BASE_REF" && yarn run snapshots
         env:
-          # pass PERCY_TOKEN secret via environment variable
           PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
+          
